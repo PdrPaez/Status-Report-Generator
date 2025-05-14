@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Gerador de Status Report</title>
+  <style>
+    body { font-family: Arial, sans-serif; color: #333; padding: 20px; }
+    h1 { margin-bottom: 10px; }
+    h2 { background-color: #f5f5f5; padding: 10px; border-left: 5px solid #2196F3; }
+    .team-card { margin-bottom: 40px; box-shadow: 0 2px 8px #0001; border-radius: 8px; padding: 10px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+    th, td { border: 1px solid #ddd; padding: 8px; font-size: 14px; }
+    th { background-color: #f0f0f0; text-align: left; }
+    .status { font-weight: bold; padding: 5px 8px; border-radius: 4px; color: #fff; display: inline-block; }
+    .Backlog { background-color: #555; }
+    .Grooming { background-color: #8B4513; }
+    .ToDo { background-color: #03A9F4; }
+    .InProgress { background-color: #FFC107; color: #000; }
+    .CodeReview { background-color: #FF9800; }
+    .Tests { background-color: #9C27B0; }
+    .PreProduction { background-color: #A0522D; }
+    .ProductionDeploy { background-color: #4CAF50; }
+    input, select { width: 100%; }
+    .add-btn, .generate-btn { margin-top: 10px; padding: 5px 10px; }
+    .remove-btn { background-color: red; color: white; border: none; cursor: pointer; padding: 4px 8px; }
+  </style>
+</head>
+<body>
+
+  <h1>📊 Gerador de Status Report</h1>
+  <label for="teamSelect">➕ Time:</label>
+  <select id="teamSelect" onchange="onTeamSelect(this)">
+    <option value="">Selecione um time</option>
+    <option>🧠 Team Neural</option>
+    <option>🔬 Team Laboratory</option>
+    <option>📈 Team ADS</option>
+    <option>🧭 Management Team</option>
+    <option>👨🏻‍💻 Time Desenvolvimento</option>
+    <option>📃 Time Redação</option>
+    <option>💰 Time Financeiro</option>
+    <option>☎️ Time Marketing</option>
+    <option>💸 Time Comercial</option>
+    <option>👨🏻‍⚕ Clínica Avanttos</option>
+    <option>👾 Time Jogo</option>
+    <option>🌐 Time Marketing Digital</option>
+    <option>💎 CEO</option>
+    <option>💎 CTO</option>
+    <option value="custom">Outro (Personalizado)</option>
+  </select>
+  <input id="teamName" placeholder="Nome do time" style="display:none;margin-top:8px" />
+  <button onclick="createTeam()">Adicionar Time</button>
+
+  <br><br>
+  <label for="newResp" id="newRespLabel" style="display:none;">➕ Novo Responsável:</label>
+  <input id="newResp" placeholder="Nome do responsável" style="display:none;" />
+  <button id="btnNewResp" onclick="addResponsavel()" style="display:none;">Adicionar Responsável</button>
+
+  <div id="teams"></div>
+
+  <h3>📌 Observações Gerais:</h3>
+  <textarea id="obsGerais" style="width:100%;height:80px" placeholder="Digite observações gerais aqui..."></textarea>
+
+  <button class="generate-btn" onclick="generateReport()">📄 Gerar Relatório</button>
+
+  <script>
+    const fases = [
+      'Backlog', 'Grooming', 'To Do', 'In Progress',
+      'Code Review', 'Tests', 'Pre-Production', 'Production Deploy'
+    ];
+    let responsaveis = ['Pedro', 'Borsuk', 'Bernardo','George','Davi','João Seika','Jennifer','Cadu','Marcos','Célia','João G.','Beto','Woz','Guilherme'];
+
+    // Renderiza o select de responsáveis, com a opção de adicionar novo responsável
+    function renderResponsaveisSelect(selected = "") {
+      let options = responsaveis.map(r => `<option${r === selected ? " selected" : ""}>${r}</option>`).join('');
+      options += `<option value="__novo__">Adicionar novo responsável</option>`;
+      return `<select onchange="onRespSelect(this)">${options}</select>`;
+    }
+
+    function onTeamSelect(select) {
+      const value = select.value;
+      const input = document.getElementById('teamName');
+      if (value === 'custom') {
+        input.style.display = 'inline-block';
+      } else if (value) {
+        input.style.display = 'none';
+        input.value = value;
+      } else {
+        input.style.display = 'none';
+        input.value = '';
+      }
+    }
+
+    function createTeam() {
+      const name = document.getElementById('teamName').value.trim();
+      if (!name) return alert('Nome do time inválido');
+
+      const existing = Array.from(document.querySelectorAll('#teams > div > h2')).map(el => el.innerText);
+      if (existing.includes(name)) return alert('Este time já foi adicionado.');
+
+      const div = document.createElement('div');
+      div.className = "team-card";
+      div.innerHTML = `
+        <h2>${name}</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Tarefa</th>
+              <th>Responsável</th>
+              <th>Fase Atual</th>
+              <th>Data Inicial</th>
+              <th>Data Final</th>
+              <th>Observações</th>
+              <th>Ação</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <button class="add-btn" onclick="addRow(this)">➕ Adicionar Tarefa</button>
+      `;
+      document.getElementById('teams').appendChild(div);
+      document.getElementById('teamName').value = '';
+      document.getElementById('teamSelect').value = '';
+    }
+
+    function addRow(button) {
+      const tbody = button.previousElementSibling.querySelector('tbody');
+      const row = tbody.insertRow();
+      row.innerHTML = `
+        <td><input placeholder="Descrição da tarefa"></td>
+        <td>${renderResponsaveisSelect()}</td>
+        <td><select>${fases.map(f => `<option>${f}</option>`).join('')}</select></td>
+        <td><input type="date" placeholder="Data Inicial"></td>
+        <td><input type="date" placeholder="Data Final"></td>
+        <td><input placeholder="Observações"></td>
+        <td><button class="remove-btn" onclick="this.closest('tr').remove()">✖</button></td>
+      `;
+    }
+
+    // Exibe campo para novo responsável apenas se selecionar "Adicionar novo responsável"
+    function onRespSelect(select) {
+      if (select.value === "__novo__") {
+        document.getElementById('newRespLabel').style.display = 'inline';
+        document.getElementById('newResp').style.display = 'inline';
+        document.getElementById('btnNewResp').style.display = 'inline';
+        window.lastRespSelect = select;
+      } else {
+        document.getElementById('newRespLabel').style.display = 'none';
+        document.getElementById('newResp').style.display = 'none';
+        document.getElementById('btnNewResp').style.display = 'none';
+        window.lastRespSelect = null;
+      }
+    }
+
+    function addResponsavel() {
+      const novo = document.getElementById('newResp').value.trim();
+      if (!novo || responsaveis.includes(novo)) return alert('Responsável inválido ou já existe');
+      responsaveis.push(novo);
+      document.getElementById('newResp').value = '';
+      document.getElementById('newRespLabel').style.display = 'none';
+      document.getElementById('newResp').style.display = 'none';
+      document.getElementById('btnNewResp').style.display = 'none';
+      alert('Responsável adicionado com sucesso!');
+      // Atualiza todos os selects de responsável:
+      document.querySelectorAll('td select').forEach(select => {
+        select.innerHTML = responsaveis.map(r => `<option>${r}</option>`).join('') + `<option value="__novo__">Adicionar novo responsável</option>`;
+      });
+      // Se veio de um select, já seleciona o novo responsável
+      if (window.lastRespSelect) {
+        window.lastRespSelect.value = novo;
+        window.lastRespSelect = null;
+      }
+    }
+
+    // Inicializa escondendo campo novo responsável
+    document.addEventListener("DOMContentLoaded", function () {
+      document.getElementById('newRespLabel').style.display = 'none';
+      document.getElementById('newResp').style.display = 'none';
+      document.getElementById('btnNewResp').style.display = 'none';
+    });
+
+    function generateReport() {
+      const now = new Date();
+      const dataAtual = now.toLocaleDateString('pt-BR');
+      let html = `<h1>Status Report – ${dataAtual}</h1>`;
+
+      document.querySelectorAll('#teams > div').forEach(teamDiv => {
+        const teamName = teamDiv.querySelector('h2').innerText;
+        html += `<h2>${teamName}</h2>
+          <table>
+            <tr>
+              <th>Tarefa</th>
+              <th>Responsável</th>
+              <th>Fase Atual</th>
+              <th>Data Inicial</th>
+              <th>Data Final</th>
+              <th>Observações</th>
+            </tr>`;
+
+        teamDiv.querySelectorAll('tbody tr').forEach(row => {
+          const cells = row.querySelectorAll('td');
+          const tarefa = cells[0].querySelector('input').value;
+          const resp = cells[1].querySelector('select').value;
+          const fase = cells[2].querySelector('select').value;
+          const dataInicial = cells[3].querySelector('input').value;
+          const dataFinal = cells[4].querySelector('input').value;
+          const obs = cells[5].querySelector('input').value;
+          html += `<tr>
+            <td>${tarefa}</td>
+            <td>${resp}</td>
+            <td><span class='status ${fase.replace(/ /g, "")}'>${fase}</span></td>
+            <td>${dataInicial}</td>
+            <td>${dataFinal}</td>
+            <td>${obs}</td>
+          </tr>`;
+        });
+
+        html += `</table>`;
+      });
+
+      const obsGerais = document.getElementById('obsGerais').value;
+      if (obsGerais) {
+        html += `<h3>📌 Observações Gerais:</h3><p>${obsGerais.replace(/\n/g, '<br>')}</p>`;
+      }
+
+      html += `<h2>🔄 Legenda das Fases</h2>
+        <table>
+          <tr><th>Fase</th><th>Descrição</th><th>Cor</th></tr>
+          <tr><td>Backlog</td><td>Ideias e demandas não iniciadas</td><td><span class="status Backlog">Backlog</span></td></tr>
+          <tr><td>Grooming</td><td>Análise e refinamento técnico</td><td><span class="status Grooming">Grooming</span></td></tr>
+          <tr><td>To Do</td><td>Pronto para desenvolvimento</td><td><span class="status ToDo">To Do</span></td></tr>
+          <tr><td>In Progress</td><td>Em desenvolvimento ativo</td><td><span class="status InProgress">In Progress</span></td></tr>
+          <tr><td>Code Review</td><td>Revisão de código</td><td><span class="status CodeReview">Code Review</span></td></tr>
+          <tr><td>Tests</td><td>Testes de qualidade</td><td><span class="status Tests">Tests</span></td></tr>
+          <tr><td>Pre-Production</td><td>Aguardando liberação</td><td><span class="status PreProduction">Pre-Production</span></td></tr>
+          <tr><td>Production Deploy</td><td>Publicado em produção</td><td><span class="status ProductionDeploy">Production</span></td></tr>
+        </table>`;
+
+      const win = window.open('', '_blank');
+      win.document.write(`<!DOCTYPE html><html><head><title>Status Report</title><style>${document.querySelector('style').innerText}</style></head><body>${html}</body></html>`);
+      win.document.close();
+    }
+  </script>
+</body>
+</html>
