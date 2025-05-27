@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Development Card Generator</title>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f4f6fa;
+      color: #181c32;
+      margin: 0;
+      padding: 2rem;
+    }
+    .container {
+      max-width: 960px;
+      margin: auto;
+      background: #ffffff;
+      border-radius: 0.625rem;
+      box-shadow: 0 0.25rem 1rem rgba(24, 28, 50, 0.1);
+      padding: 2.5rem 2rem;
+      border: 1px solid #eff2f5;
+    }
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 600;
+      color: #1e1e2d;
+      margin-bottom: 2rem;
+      border-bottom: 1px solid #eff2f5;
+      padding-bottom: 1rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 2rem;
+    }
+    td {
+      vertical-align: top;
+      padding: 1rem;
+      border-top: 1px solid #eff2f5;
+      font-size: 0.95rem;
+    }
+    td:first-child {
+      font-weight: 600;
+      color: #3f4254;
+      width: 30%;
+      white-space: nowrap;
+    }
+    .optional {
+      display: none;
+    }
+    .content-box {
+      background: #f1faff;
+      border: 1px dashed #c9f7f5;
+      padding: 1rem 1.25rem;
+      border-radius: 0.475rem;
+      color: #3f4254;
+    }
+    ul {
+      margin: 0;
+      padding-left: 1.25rem;
+    }
+    ul li {
+      margin-bottom: 0.5rem;
+    }
+    textarea, input {
+      width: 100%;
+      padding: 0.75rem;
+      margin-bottom: 1rem;
+      border: 1px solid #cfd8dc;
+      border-radius: 0.475rem;
+      font-size: 1rem;
+    }
+    .generate-btn {
+      background-color: #3699ff;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 0.475rem;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🧾 Development Card Generator</h1>
+
+    <input type="text" id="taskTitle" placeholder="Task Title" />
+    <textarea id="description" placeholder="Description / Context (each line will be a tip)"></textarea>
+    <textarea id="expected" placeholder="Expected Behavior"></textarea>
+    <textarea id="actual" placeholder="Actual Behavior (Optional)"></textarea>
+    <input type="text" id="branch" placeholder="Branch to be used (e.g. feature/task-name)" />
+    <textarea id="steps" placeholder="Steps to Reproduce (each line becomes a numbered step)"></textarea>
+    <textarea id="suggested" placeholder="Suggested Solution (Optional)"></textarea>
+    <textarea id="criteria" placeholder="Acceptance Criteria (each line becomes 🎯 item)"></textarea>
+    <textarea id="dependencies" placeholder="Dependencies (Optional)"></textarea>
+
+    <button class="generate-btn" onclick="generateCard()">Generate Card</button>
+  </div>
+  <script>
+  function generateCard() {
+    const title = document.getElementById('taskTitle').value;
+    const desc = document.getElementById('description').value;
+    const expected = document.getElementById('expected').value;
+    const actual = document.getElementById('actual').value;
+    const branch = document.getElementById('branch').value;
+    const steps = document.getElementById('steps').value;
+    const suggested = document.getElementById('suggested').value;
+    const criteria = document.getElementById('criteria').value;
+    const dependencies = document.getElementById('dependencies').value;
+
+    let html = `
+      <div class='container'>
+      <h1>🧾 Development Card – ${title}</h1>
+      <table>
+        <tr><td>Description / Context</td><td><div class='content-box'><ul>${desc.split('\n').filter(d=>d.trim()).map(d => `<li>💡 ${d}</li>`).join('')}</ul></div></td></tr>
+        <tr><td>Expected Behavior</td><td><div class='content-box'>${expected}</div></td></tr>
+        ${actual ? `<tr><td>Actual Behavior</td><td><div class='content-box'>${actual}</div></td></tr>` : ''}
+        <tr><td>Branch to be used</td><td><div class='content-box'>${branch}</div></td></tr>
+        ${steps ? `<tr><td>Steps to Reproduce</td><td><div class='content-box'><ol>${steps.split('\n').filter(s=>s.trim()).map(s => `<li>${s}</li>`).join('')}</ol></div></td></tr>` : ''}
+        ${suggested ? `<tr><td>Suggested Solution</td><td><div class='content-box'>${suggested}</div></td></tr>` : ''}
+        <tr><td>Acceptance Criteria</td><td><div class='content-box'><ul>${criteria.split('\n').filter(c=>c.trim()).map(c => `<li>🎯 ${c}</li>`).join('')}</ul></div></td></tr>
+        ${dependencies ? `<tr><td>Dependencies</td><td><div class='content-box'><ul>${dependencies.split('\n').filter(d=>d.trim()).map(d => `<li>${d}</li>`).join('')}</ul></div></td></tr>` : ''}
+      </table></div>`;
+
+    const style = document.querySelector('style').innerText;
+    const win = window.open('', '_blank');
+    win.document.write(`<!DOCTYPE html><html><head><title>Dev Card</title><style>${style}</style></head><body>${html}
+    <button onclick="toggleHelp()" style="position: fixed; bottom: 20px; right: 20px; background: #3699ff; color: white; border: none; border-radius: 50%; width: 48px; height: 48px; font-size: 24px; cursor: pointer; box-shadow: 0 0 10px rgba(0,0,0,0.15);">?</button>
+    <div id="helpModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:white; border:1px solid #ddd; border-radius:8px; padding:20px; box-shadow: 0 0 30px rgba(0,0,0,0.2); max-width: 300px;">
+      <p style="margin-top:0">Do you need help?</p>
+      <p>Click the button below to message me on Discord:</p>
+      <a href="https://discord.com/users/552342388283277322" target="_blank" style="display:inline-block; background:#5865F2; color:white; padding:8px 12px; border-radius:6px; text-decoration:none;">Open Discord 🎧</a>
+    </div>
+    <script>
+      function toggleHelp() {
+        var modal = document.getElementById('helpModal');
+        modal.style.display = modal.style.display === 'none' ? 'block' : 'none';
+      }
+    <\/script>
+    </body></html>`);
+    win.document.close();
+  }
+  </script>
+</body>
+</html>
